@@ -1,0 +1,14 @@
+/venv
+*/checkpoints
+/models
+*.ipynb_checkpoints
+env_var.json
+.vscode
+*.png
+*.jpg
+*.csv
+*.gif
+*.pt
+*.pyc
+*.mp4
+*.log
