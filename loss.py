@@ -4,44 +4,6 @@ import torch.nn.functional as F
 import math
 
 
-def gradient_x(img):
-    gx = img[:, :, :-1] - img[:, :, 1:]
-    return gx
-
-
-def gradient_y(img):
-    gy = img[:, :-1, :] - img[:, 1:, :]
-    return gy
-
-
-def get_image_gradient(image):
-    return gradient_x(image), gradient_y(image)
-
-
-def depth_loss(prediction, ground_truth):
-    L1_loss = nn.L1Loss()
-    L_depth = L1_loss(prediction, ground_truth)
-    return L_depth
-
-
-def grad_loss(prediction, ground_truth):
-    L1_loss = nn.MSELoss()
-    dx_prediction, dy_prediction = get_image_gradient(prediction)
-    dx_ground_truth, dy_ground_truth = get_image_gradient(ground_truth)
-    L_grad_x = L1_loss(dx_prediction, dx_ground_truth)
-    L_grad_y = L1_loss(dy_prediction, dy_ground_truth)
-    L_grad = L_grad_x + L_grad_y
-    return L_grad
-
-
-def TV_loss(prediction):
-    dx, dy = get_image_gradient(prediction)
-    dx = torch.abs(dx)
-    dy = torch.abs(dy)
-    L_TV = torch.sum(dx) + torch.sum(dy)
-    return L_TV
-
-
 def SSIM(prediction, ground_truth):
     window_size = 11
     sigma = 1.5
@@ -72,36 +34,8 @@ def SSIM(prediction, ground_truth):
     return L_ssim
 
 
-def contrast_loss(prediction, ground_truth):
-    mse_loss = nn.MSELoss()
-    prediction_std = torch.std(prediction)
-    ground_truth_std = torch.std(ground_truth)
-    return mse_loss(ground_truth_std, prediction_std)
-
-
-def SIMSE(prediction, ground_truth, validity_map):
-    simse_image = torch.abs(prediction - ground_truth) / (ground_truth + 1e-6)
-    simse_image = simse_image * validity_map
-    return torch.mean(simse_image)
-
-
-def laplacian_loss(prediction, ground_truth):
-    L1_loss = nn.L1Loss()
-    dx_prediction, dy_prediction = get_image_gradient(prediction)
-    dx_sq_prediction, dx_dy_prediction = get_image_gradient(dx_prediction)
-    dy_dx_prediction, dy_sq_prediction = get_image_gradient(dy_prediction)
-    laplacian_prediction = dx_sq_prediction + dy_sq_prediction
-
-    dx_ground_truth, dy_ground_truth = get_image_gradient(ground_truth)
-    dx_sq_ground_truth, dy_dx_ground_truth = get_image_gradient(dx_ground_truth)
-    dy_dx_ground_truth, dy_sq_ground_truth = get_image_gradient(dy_ground_truth)
-    laplacian_ground_truth = dx_sq_ground_truth + dy_sq_ground_truth
-    L_laplacian = L1_loss(laplacian_prediction, laplacian_ground_truth)
-    return L_laplacian
-
-
-def Loss(prediction, ground_truth, validity_map):
-    L_depth = depth_loss(prediction, ground_truth)
+def Loss(prediction, ground_truth):
+    L1 = nn.L1Loss()
+    L1_loss = L1(prediction, ground_truth)
     L_ssim = SSIM(prediction, ground_truth)
-    L_SIMSE = SIMSE(prediction, ground_truth, validity_map)
-    return L_depth, L_ssim, L_SIMSE
+    return L1_loss, L_ssim
